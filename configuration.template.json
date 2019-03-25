@@ -1,0 +1,34 @@
+{
+  "server_url": "127.0.0.1",
+
+  "clients": {
+
+    "android":{
+      "uninstall_required": true,
+      "package": "com.android.app",
+      "activity": "com.android.app.Activity",
+      "path_to_apk": "~/app.apk",
+      "device_limit": -1
+    },
+
+    "ios":{
+      "uninstall_required": false,
+      "package": "com.ios.app",
+      "path_to_ipa": "~/app.ipa",
+      "device_limit": -1
+    },
+
+    "osx":{
+      "path_to_app": "~/game.app"
+    },
+
+    "windows":{
+      "path_to_exe": "C:\\game.exe"
+    }
+  },
+
+  "scenarios": [ {
+      "name": "test_1", "app_args": "-scenario test_1", "timeout": 60
+    }
+  ]
+}
