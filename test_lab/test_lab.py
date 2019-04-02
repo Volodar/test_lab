@@ -7,6 +7,7 @@ from configuration import Configuration
 from scenario import Scenario
 from clients.android import AndroidClient
 from clients.ios import IosClient
+from clients.osx import OsxClient
 
 
 class TestLab(object):
@@ -90,6 +91,7 @@ class TestLab(object):
             clients = {
                 'android': AndroidClient,
                 'ios': IosClient,
+                'osx': OsxClient,
             }
             if platform not in clients:
                 continue
