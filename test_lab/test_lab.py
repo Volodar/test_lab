@@ -11,9 +11,9 @@ from clients.osx import OsxClient
 
 
 class TestLab(object):
-    def __init__(self, path_to_configuration):
+    def __init__(self, path_or_json):
         RequestHandler.TEST_LAB = self
-        self.configuration = Configuration(path_to_configuration)
+        self.configuration = Configuration(path_or_json)
 
         self.server = None
         self.server_url = self.configuration.json.get('server_url', 'http://127.0.0.1:8010')

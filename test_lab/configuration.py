@@ -3,11 +3,11 @@ import os
 
 
 class Configuration(object):
-    def __init__(self, path_co_json=None, json_dict=None):
-        if path_co_json and os.path.isfile(path_co_json):
-            self.json = json.load(open(path_co_json))
-        elif json_dict:
-            self.json = json_dict
+    def __init__(self, path_or_json):
+        if isinstance(path_or_json, dict):
+            self.json = path_or_json
+        elif path_or_json and os.path.isfile(path_or_json):
+            self.json = json.load(open(path_or_json))
         else:
             raise RuntimeError('Cannot load configuration json')
 
