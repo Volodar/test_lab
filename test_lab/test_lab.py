@@ -8,6 +8,7 @@ from scenario import Scenario
 from clients.android import AndroidClient
 from clients.ios import IosClient
 from clients.osx import OsxClient
+from storage import Storage
 
 
 class TestLab(object):
@@ -27,11 +28,10 @@ class TestLab(object):
         self.server_thread = None
         self.monitor_thread = None
 
-        self.tests = {}
+        self.results_storage = Storage()
         self.scenarios = []
         for scenario in self.configuration.json['scenarios']:
             self.scenarios.append(Scenario(scenario))
-            self.tests[self.scenarios[-1].name] = []
 
         self.clients = []
         self.clients_count = 0
@@ -43,7 +43,11 @@ class TestLab(object):
         self._run_server()
         for scenario in self.scenarios:
             self._run_monitor(scenario)
-            self._run_scenario(scenario)
+            try:
+                self._run_scenario(scenario)
+            except RuntimeError as error:
+                print(error)
+                self._terminate = True
             self.monitor_thread.join()
         self._stop_server()
         self._print_results()
@@ -69,8 +73,10 @@ class TestLab(object):
                 with self.mutex:
                     if self._terminate:
                         break
-                    print 'Results: {}, Clients: {}'.format(len(self.tests[scenario.name]), self.clients_count)
-                    if len(self.tests[scenario.name]) == self.clients_count:
+                    current = self.results_storage.get_records_count(scenario.name)
+                    elapsed = int(time.time() - start_time)
+                    print('Progress: {}s {}/{}'.format(elapsed, current, self.clients_count))
+                    if current == self.clients_count:
                         break
 
         self.monitor_thread = Thread(target=worker)
@@ -102,16 +108,21 @@ class TestLab(object):
 
     def _print_results(self):
         print('\n\nTests result:\n')
-        success = True
-        for scenario, data in self.tests.items():
-            print('  Test: ', scenario)
-            for result in self.tests[scenario]:
-                print('    Platform: [TODO], Device: [TODO], Result: {}'.format(result))
-                success = success and (result == 0)
+        success = len(self.results_storage.results) == len(self.scenarios)
+        for test_case in self.results_storage.results:
+            print('  Test: ', test_case.name)
+            for record in test_case.results:
+                print('    Platform: {}, Name: {}, ID: {}, Result code: {}'.format(record.client_platform,
+                                                                                   record.client_name,
+                                                                                   record.client_id,
+                                                                                   record.result_code))
+                success = success and (record.result_code == 0)
+            success = success and len(test_case.results) == self.clients_count
         print('\nSumary: ' + ('Success' if success else 'Failed'))
+        exit(0 if success else 1)
 
-    def add_result(self, code, scenario):
-        self.tests[scenario].append(code)
+    def add_result(self, code, scenario, client_id, client_name, client_platform):
+        self.results_storage.add_result(scenario, code, client_id, client_name, client_platform)
 
 
 class RequestHandler:
@@ -127,8 +138,13 @@ class RequestHandler:
             params = urlparse.parse_qs(parsed.query)
             print 'Got Payload: ', payload
             if parsed.path == '/result' and 'code' in params or 'scenario' in params:
+                code = int(params['code'][0])
+                scenario = params['scenario'][0]
+                client_id = params['id'][0] if 'id' in params else 'unknown'
+                client_name = params['name'][0] if 'name' in params else 'unknown'
+                client_platform = params['platform'][0] if 'platform' in params else 'unknown'
                 with RequestHandler.TEST_LAB.mutex:
-                    RequestHandler.TEST_LAB.add_result(int(params['code'][0]), params['scenario'][0])
+                    RequestHandler.TEST_LAB.add_result(code, scenario, client_id, client_name, client_platform)
         except RuntimeError:
             self.server.send('error')
         else:

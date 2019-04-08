@@ -25,7 +25,9 @@ class Configuration(object):
         return None
 
     def get_scenario_app_args(self, scenario):
-        return str(self.get_scenario_config_value(scenario, 'app_args'))
+        value = str(self.get_scenario_config_value(scenario, 'app_args'))
+        value = value.format(name=scenario)
+        return value
 
     def get_scenario_timeout(self, scenario):
         return self.get_scenario_config_value(scenario, 'timeout')

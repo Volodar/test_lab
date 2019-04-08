@@ -78,6 +78,11 @@ class AndroidClient(object):
 
     def _run_appplication(self, device, app_args=None):
         print('Run application on device ' + device.get_human_name())
+        app_args = app_args.split(' ')
+        app_args.extend(['-test_lab:platform', 'android'])
+        app_args.extend(['-test_lab:name', device.name])
+        app_args.extend(['-test_lab:id', device.identifier])
+        app_args = ' '.join(args)
         self.adb.start_app(device.ip, device.identifier, self.package, self.activity, app_args)
 
 
