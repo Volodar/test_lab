@@ -1,5 +1,12 @@
+import os
 from test_lab.clients.adb_wrapper import AdbWrapper
 from test_lab.clients.device import Device
+
+
+def get_root():
+    project_root = os.path.dirname(os.path.abspath(__file__)).replace('\\', '/')
+    project_root = os.path.abspath(project_root + '/../..')
+    return project_root
 
 
 class AndroidClient(object):
@@ -15,6 +22,7 @@ class AndroidClient(object):
         self.activity = configuration.get('android', 'activity')
         self.package = configuration.get('android', 'package')
         self.path_to_app = configuration.get('android', 'path_to_apk')
+        self.path_to_app = os.path.abspath(self.path_to_app.format(root=get_root()))
         self.uninstall_app = configuration.get('android', 'uninstall_required', self.uninstall_app)
         self.device_limit = configuration.get('android', 'device_limit', self.device_limit)
 
