@@ -63,7 +63,8 @@ class TestLab(object):
         print 'Run monitor'
 
         def worker():
-            while True:
+            start_time = time.time()
+            while time.time() <= start_time + scenario.timeout:
                 time.sleep(1)
                 with self.mutex:
                     if self._terminate:
