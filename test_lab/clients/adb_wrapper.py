@@ -36,6 +36,7 @@ class AdbWrapper(object):
 
         devices = []
         lines = process.out.split('\n')
+        lines = [line.strip() for line in lines]
         if 'List of devices attached' not in lines:
             raise RuntimeError('Don`t has connected Android devices')
 

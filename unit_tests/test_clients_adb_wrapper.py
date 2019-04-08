@@ -85,7 +85,7 @@ class SubprocessDummy(object):
                     self.err = 'Cannot connect to device'
                     self.code = 1
             elif adb_command == 'devices':
-                self.out = 'List of devices attached\ntest_device device\n'
+                self.out = 'List of devices attached\r\ntest_device device\n'
                 self.err = ''
                 self.code = 0
             elif adb_command == 'getprop':
