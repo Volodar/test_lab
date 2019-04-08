@@ -1,9 +1,15 @@
 import json
+import os
 
 
 class Configuration(object):
-    def __init__(self, path_co_json):
-        self.json = json.load(open(path_co_json))
+    def __init__(self, path_co_json=None, json_dict=None):
+        if path_co_json and os.path.isfile(path_co_json):
+            self.json = json.load(open(path_co_json))
+        elif json_dict:
+            self.json = json_dict
+        else:
+            raise RuntimeError('Cannot load configuration json')
 
     def get(self, client, key, default=None):
         if client not in self.json['clients'] and default is None:

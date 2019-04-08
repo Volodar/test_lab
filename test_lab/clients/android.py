@@ -1,15 +1,16 @@
-import subprocess
-import re
+from test_lab.clients.adb_wrapper import AdbWrapper
+from test_lab.clients.device import Device
 
 
 class AndroidClient(object):
 
-    def __init__(self, configuration):
+    def __init__(self, configuration, adb=None):
         self.package = ''
         self.uninstall_app = True
         self.path_to_app = None
         self.device_limit = -1
         self.devices = []
+        self.adb = AdbWrapper() if adb is None else adb
 
         self.activity = configuration.get('android', 'activity')
         self.package = configuration.get('android', 'package')
@@ -17,91 +18,59 @@ class AndroidClient(object):
         self.uninstall_app = configuration.get('android', 'uninstall_required', self.uninstall_app)
         self.device_limit = configuration.get('android', 'device_limit', self.device_limit)
 
+        self.scan_devices()
+        self.scan_remote_devices(configuration)
+
+        print 'Available devices'
+        for device in self.devices:
+            print '  Name: {}, ID: {}, IP: {}'.format(device.name, device.identifier, device.ip)
+
     def launch(self, configuration, scenario):
         args = configuration.get_scenario_app_args(scenario)
 
-        if self.uninstall_app:
-            self.uninstall()
-        self.install(self.path_to_app)
-        self.run(self.activity, args)
+        for device in self.devices:
+            if self.uninstall_app:
+                self._uninstall_apk(device)
+            self._install_apk(device, self.path_to_app)
+            self._run_appplication(device, args)
 
     def scan_devices(self):
         print('Scan devices:')
-        process = subprocess.Popen(['adb', 'devices'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        output, error = process.communicate()
-        if process.returncode != 0:
-            raise RuntimeError('Error on scan devices: ' + error)
-        print(output)
-        if error:
-            print(error)
-        lines = output.split('\n')
-        line_index = lines.index('List of devices attached')
-        if line_index == '-1':
-            raise RuntimeError('Don`t has connected Android devices ')
-        line_index += 1
-        while line_index < len(lines):
-            device = re.findall(r'(\w+)\s+device', lines[line_index])
-            if device:
-                self.devices.append(device[0])
-            if 0 < self.device_limit <= len(self.devices):
-                break
-            line_index += 1
+        self.adb.kill_server()
+        usb_devices = self.adb.devices()
+        for identifier in usb_devices:
+            device = Device()
+            device.identifier = identifier
+            device.name = self.adb.get_usb_device_name(identifier)
+            self.devices.append(device)
 
-    def install(self, path_to_apk):
-        for device in self.devices:
-            self._install_apk(device, path_to_apk)
+    def scan_remote_devices(self, configuration):
+        print('Scan remote devices')
 
-    def uninstall(self):
-        for device in self.devices:
-            self._uninstall_apk(device)
+        remote_devices = configuration.get('android', 'remote_devices', [])
 
-    def run(self, activity, args=None):
-        for device in self.devices:
-            self._run_appplication(device, activity, args)
+        for device_json in remote_devices:
+            ip = device_json['ip']
+            if self.adb.connect(ip):
+                device = Device()
+                device.ip = ip
+                device.name = device_json.get('name')
+                device.identifier = self.adb.get_remove_device_identifier()
+                self.devices.append(device)
+
+        self.adb.kill_server()
 
     def _install_apk(self, device, path_to_apk):
-        print('Install apk to device ' + device)
-        command = 'adb -s {device} install -r -t {apk}'.format(device=device, apk=path_to_apk)
-        process = subprocess.Popen(command.split(' '))
-        output, error = process.communicate()
-        print(output)
-        if error:
-            print(error)
-        if process.returncode != 0:
-            raise RuntimeError('Cannot install akp to device ' + device)
+        print('Install apk to device ' + device.get_human_name())
+        self.adb.install_apk(device.ip, device.identifier, path_to_apk)
 
     def _uninstall_apk(self, device):
-        print('Uninstall apk on device ' + device)
-        command = 'adb -s {device} uninstall {package}'.format(device=device, package=self.package)
-        print command
-        process = subprocess.Popen(command.split(' '))
-        output, error = process.communicate()
-        print(output)
-        if error:
-            print(error)
-        if process.returncode != 0:
-            raise RuntimeError('Cannot uninstall apk on device ' + device)
+        print('Uninstall apk on device ' + device.get_human_name())
+        self.adb.uninstall(device.ip, device.identifier, self.package)
 
-    def _run_appplication(self, device, activity, app_args=None):
-        print('Run application on device ' + device)
-        command = 'adb -s {device} shell am start -n {package}/{activity} -a android.intent.action.MAIN -c android.intent.category.LAUNCHER'.format(
-            device=device,
-            package=self.package,
-            activity=activity)
-
-        commands = command.split(' ')
-        if app_args is not None:
-            commands.append('-e')
-            commands.extend(app_args.split(' '))
-        print commands
-
-        process = subprocess.Popen(commands, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        output, error = process.communicate()
-        print(output)
-        if error:
-            print(error)
-        if process.returncode != 0:
-            raise RuntimeError('Cannot launch application on device ' + device)
+    def _run_appplication(self, device, app_args=None):
+        print('Run application on device ' + device.get_human_name())
+        self.adb.start_app(device.ip, device.identifier, self.package, self.activity, app_args)
 
 
 def tests():
@@ -110,7 +79,6 @@ def tests():
     config = Configuration('../../configuration.json')
 
     client = AndroidClient(config)
-    client.scan_devices()
     client.launch(config, 'window_choose_hero_in_battle')
 
 

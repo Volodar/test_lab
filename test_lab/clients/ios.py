@@ -22,6 +22,9 @@ class IosClient(object):
         self.uninstall_app = configuration.get('ios', 'uninstall_required', self.uninstall_app)
         self.device_limit = configuration.get('ios', 'device_limit', self.device_limit)
 
+        self.scan_devices()
+        self.scan_remote_devices(configuration)
+
     def launch(self, configuration, scenario):
         args = configuration.get_scenario_app_args(scenario)
 
@@ -49,6 +52,9 @@ class IosClient(object):
             if 0 < self.device_limit <= len(self.devices):
                 break
         print self.devices
+
+    def scan_remote_devices(self, configuration):
+        pass
 
     def uninstall(self):
         for device in self.devices:

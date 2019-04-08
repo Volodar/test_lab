@@ -96,7 +96,6 @@ class TestLab(object):
             if platform not in clients:
                 continue
             client = clients[platform](self.configuration)
-            client.scan_devices()
             self.clients.append(client)
             self.clients_count += len(client.devices)
 

@@ -1,16 +1,22 @@
+import os
 import subprocess
 
 
 class OsxClient(object):
     def __init__(self, configuration):
         self.path_to_app = configuration.get('osx', 'path_to_app')
-        self.apps_args = configuration.get('osx', 'app_args')
-        self.devices = ['osx']
+        self.apps_args = ''
+        self.devices = []
+        if os.path.isfile(self.path_to_app) or os.path.isdir(self.path_to_app):
+            self.apps_args = configuration.get('osx', 'app_args')
+            self.devices = ['osx']
 
     def scan_devices(self):
         pass
 
     def launch(self, configuration, scenario):
+        if not self.devices:
+            return
         args = configuration.get_scenario_app_args(scenario)
         self._run(self.path_to_app, args + ' ' + self.apps_args)
 
