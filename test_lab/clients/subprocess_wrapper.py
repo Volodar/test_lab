@@ -1,3 +1,4 @@
+from __future__ import print_function
 import subprocess
 
 
@@ -10,8 +11,8 @@ class SubprocessWrapper(object):
         self.code = 0
 
     def call(self):
-        print self.command
+        print(self.command)
         self.out, self.err = self.process.communicate()
         self.code = self.process.returncode
-        print self.out
+        print(self.out)
         return self.code

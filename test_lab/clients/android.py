@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 from test_lab.clients.adb_wrapper import AdbWrapper
 from test_lab.clients.device import Device
@@ -29,9 +30,9 @@ class AndroidClient(object):
         self.scan_devices()
         self.scan_remote_devices(configuration)
 
-        print 'Available devices'
+        print('Available Android devices')
         for device in self.devices:
-            print '  Name: {}, ID: {}, IP: {}'.format(device.name, device.identifier, device.ip)
+            print('  Name: {}, ID: {}, IP: {}'.format(device.name, device.identifier, device.ip))
 
     def launch(self, configuration, scenario):
         args = configuration.get_scenario_app_args(scenario)

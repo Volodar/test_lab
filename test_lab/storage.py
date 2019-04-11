@@ -19,12 +19,12 @@ class Storage(object):
 
     def __init__(self):
         self.results = []
+        
+    def push_test_case(self, test_case_name):
+        self.results.append(TestCase(test_case_name))
 
     def add_result(self, test_case_name, result_code, client_id, client_name, client_platform):
-        if test_case_name not in self.results:
-            self.results[test_case_name] = TestCase(test_case_name)
-        
-        test_case = self.results[test_case_name]
+        test_case = self.get_test_case(test_case_name)
         record = TestCaseRecord()
         record.result_code = result_code
         record.client_id = client_id
@@ -33,8 +33,14 @@ class Storage(object):
         
         test_case.results.append(record)
         
-    def get_records_count(self, test_case_name):
+    def get_test_case(self, name):
         for test_case in reversed(self.results):
-            if test_case.name == test_case_name:
-                return len(test_case.results)
-        return 0
+            if test_case.name == name:
+                return test_case
+        return None
+
+    def get_records_count(self, test_case_name):
+        test_case = self.get_test_case(test_case_name)
+        if test_case is None:
+            return 0
+        return len(test_case.results)

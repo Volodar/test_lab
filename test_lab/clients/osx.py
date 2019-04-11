@@ -1,5 +1,7 @@
+from __future__ import print_function
 import os
-import subprocess
+from device import Device
+from subprocess_wrapper import SubprocessWrapper
 
 
 class OsxClient(object):
@@ -9,7 +11,8 @@ class OsxClient(object):
         self.devices = []
         if os.path.isfile(self.path_to_app) or os.path.isdir(self.path_to_app):
             self.apps_args = configuration.get('osx', 'app_args', '')
-            self.devices = ['osx']
+            device = Device()
+            self.devices.append(device)
 
     def scan_devices(self):
         pass
@@ -31,13 +34,7 @@ class OsxClient(object):
             path=self.path_to_app,
             args=args)
 
-        commands = command.split(' ')
-        print command
-        print commands
-        process = subprocess.Popen(commands, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        output, error = process.communicate()
-        print(output)
-        if error:
-            print(error)
-        if process.returncode != 0:
-            raise RuntimeError('Cannot launch application on OSX ')
+        process = SubprocessWrapper(command)
+        code = process.call()
+        if code != 0: # 253 - no connected devices
+            raise RuntimeError('Cannot launch application on OSX. Error:' + process.err)

@@ -1,3 +1,4 @@
+from __future__ import print_function
 from BaseHTTPServer import HTTPServer
 from BaseHTTPServer import BaseHTTPRequestHandler
 
@@ -26,7 +27,7 @@ class HttpServer(BaseHTTPRequestHandler):
 
         except Exception as inst:
             self.wfile.write("error({})".format(inst.message))
-            print "error({})".format(inst.message)
+            print("error({})".format(inst.message))
 
     def send(self, message):
         self.wfile.write(message)

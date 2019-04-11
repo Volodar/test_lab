@@ -1,3 +1,4 @@
+from __future__ import print_function
 import time
 import urlparse
 from threading import Thread
@@ -42,6 +43,7 @@ class TestLab(object):
     def run(self):
         self._run_server()
         for scenario in self.scenarios:
+            self.results_storage.push_test_case(scenario.name)
             self._run_monitor(scenario)
             try:
                 self._run_scenario(scenario)
@@ -64,7 +66,7 @@ class TestLab(object):
         self.server_thread.start()
 
     def _run_monitor(self, scenario):
-        print 'Run monitor'
+        print('Run monitor')
 
         def worker():
             start_time = time.time()
@@ -87,24 +89,34 @@ class TestLab(object):
             client.launch(self.configuration, scenario.name)
 
     def _stop_server(self):
-        print 'Stop server'
+        print('Stop server')
         if self.server:
             self.server.shutdown()
             self.server_thread.join()
             self.server = None
 
     def _create_clients(self):
-        for platform, json in self.configuration.json['clients'].items():
+        threads = []
+        
+        def create(platform):
             clients = {
                 'android': AndroidClient,
                 'ios': IosClient,
                 'osx': OsxClient,
             }
             if platform not in clients:
-                continue
+                return None
             client = clients[platform](self.configuration)
             self.clients.append(client)
             self.clients_count += len(client.devices)
+            
+        for platform in self.configuration.json['clients']:
+            thread = Thread(target=create, args=(platform, ))
+            thread.start()
+            threads.append(thread)
+
+        for thread in threads:
+            thread.join()
 
     def _print_results(self):
         print('\n\nTests result:\n')
@@ -132,11 +144,11 @@ class RequestHandler:
         self.response = None
         self.server = server
 
-    def handle(self, client_address, payload):
+    def handle(self, _, payload):
         try:
             parsed = urlparse.urlparse(payload)
             params = urlparse.parse_qs(parsed.query)
-            print 'Got Payload: ', payload
+            print('Got Payload: ', payload)
             if parsed.path == '/result' and 'code' in params or 'scenario' in params:
                 code = int(params['code'][0])
                 scenario = params['scenario'][0]

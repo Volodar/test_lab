@@ -1,3 +1,4 @@
+from __future__ import print_function
 import re
 import os
 from device import Device
@@ -36,9 +37,9 @@ class IosClient(object):
     def scan_devices(self):
         print('Scan devices:')
         
-        process = SubprocessWrapper('{root}/ios-deploy -c --timeout 1'.format(root=self.root))
+        process = SubprocessWrapper('{root}/ios-deploy -c --timeout 2'.format(root=self.root))
         code = process.call()
-        if code != 0:
+        if code != 0 and code != 253:  # 253 - no connected devices
             raise RuntimeError('Error on scan devices: ' + process.err)
         
         lines = process.out.split('\n')
@@ -51,7 +52,10 @@ class IosClient(object):
                 self.devices.append(device)
             if 0 < self.device_limit <= len(self.devices):
                 break
-        print self.devices
+
+        print('Available iOS devices')
+        for device in self.devices:
+            print('  Name: {}, ID: {}, IP: {}'.format(device.name, device.identifier, device.ip))
     
     def scan_remote_devices(self, configuration):
         pass
