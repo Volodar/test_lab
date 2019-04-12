@@ -50,7 +50,7 @@ class AdbWrapper(object):
         return devices
 
     def get_usb_device_name(self, identifier):
-        process = self.subprocess_wrapper('adb -s {} shell getprop ro.config.CID'.format(identifier))
+        process = self.subprocess_wrapper('adb -s {} shell getprop ro.product.model'.format(identifier))
         if process.call() != 0:
             raise RuntimeError('Cannot get property from device: ' + identifier)
         return process.out.strip()
@@ -95,7 +95,7 @@ class AdbWrapper(object):
             command = 'adb -s {}'.format(device) + command
 
         if app_args is not None:
-            command += ' -e ' + app_args
+            command += app_args
 
         process = self.subprocess_wrapper(command)
         if process.call() != 0:

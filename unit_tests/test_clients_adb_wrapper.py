@@ -32,8 +32,14 @@ class AdbServer(object):
 class SubprocessDummy(object):
     ADB = None
 
-    def __init__(self, command):
-        self.command = command
+    def __init__(self, arguments):
+        if isinstance(arguments, str):
+            arguments = arguments.split(' ')
+
+        assert isinstance(arguments, list)
+        assert len(arguments) > 0
+
+        self.arguments = arguments
         self.out = ''
         self.err = ''
         self.code = 0
@@ -43,7 +49,7 @@ class SubprocessDummy(object):
         return self.code
 
     def dummy_call(self):
-        commands = self.command.split(' ')
+        commands = self.arguments
 
         if commands[0] == 'adb':
             adb_command = commands[1]
@@ -89,7 +95,7 @@ class SubprocessDummy(object):
                 self.err = ''
                 self.code = 0
             elif adb_command == 'getprop':
-                if commands[3] == 'ro.config.CID':
+                if commands[3] == 'ro.product.model':
                     self.out = 'test_name'
                 elif commands[3] == 'ro.boot.serialno':
                     self.out = 'test_device'

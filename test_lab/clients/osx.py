@@ -6,6 +6,7 @@ from subprocess_wrapper import SubprocessWrapper
 
 class OsxClient(object):
     def __init__(self, configuration):
+        self.server_url = ''
         self.path_to_app = configuration.get('osx', 'path_to_app')
         self.apps_args = ''
         self.devices = []
@@ -29,6 +30,7 @@ class OsxClient(object):
         args.extend(['-test_lab:platform', 'osx'])
         args.extend(['-test_lab:name', 'osx'])
         args.extend(['-test_lab:id', 'osx'])
+        args.extend(['-test_lab:server', self.server_url])
         args = ' '.join(args)
         command = 'open -a {path} --args {args}'.format(
             path=self.path_to_app,

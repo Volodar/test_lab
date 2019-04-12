@@ -85,8 +85,17 @@ class TestLab(object):
         self.monitor_thread.start()
 
     def _run_scenario(self, scenario):
+        def worker(client, scenario_name):
+            client.launch(self.configuration, scenario_name)
+
+        threads = []
         for client in self.clients:
-            client.launch(self.configuration, scenario.name)
+            thread = Thread(target=worker, args=(client, scenario.name))
+            thread.start()
+            threads.append(thread)
+
+        for thread in threads:
+            thread.join()
 
     def _stop_server(self):
         print('Stop server')
@@ -97,7 +106,7 @@ class TestLab(object):
 
     def _create_clients(self):
         threads = []
-        
+
         def create(platform):
             clients = {
                 'android': AndroidClient,
@@ -107,9 +116,10 @@ class TestLab(object):
             if platform not in clients:
                 return None
             client = clients[platform](self.configuration)
+            client.server_url = 'http://{}:{}'.format(self.server_url, self.server_port)
             self.clients.append(client)
             self.clients_count += len(client.devices)
-            
+
         for platform in self.configuration.json['clients']:
             thread = Thread(target=create, args=(platform, ))
             thread.start()

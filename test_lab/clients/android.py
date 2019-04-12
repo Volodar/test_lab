@@ -13,6 +13,7 @@ def get_root():
 class AndroidClient(object):
 
     def __init__(self, configuration, adb=None):
+        self.server_url = ''
         self.package = ''
         self.uninstall_app = True
         self.path_to_app = None
@@ -36,6 +37,7 @@ class AndroidClient(object):
 
     def launch(self, configuration, scenario):
         args = configuration.get_scenario_app_args(scenario)
+        args = ' -e ' + args
 
         for device in self.devices:
             if self.uninstall_app:
@@ -59,7 +61,7 @@ class AndroidClient(object):
         remote_devices = configuration.get('android', 'remote_devices', [])
 
         for device_json in remote_devices:
-            ip = device_json['ip']
+            ip = device_json['ip'].encode('utf-8')
             if self.adb.connect(ip):
                 device = Device()
                 device.ip = ip
@@ -79,11 +81,14 @@ class AndroidClient(object):
 
     def _run_appplication(self, device, app_args=None):
         print('Run application on device ' + device.get_human_name())
+        device_name = device.name
+        device_name = device_name.replace(' ', '_')
         app_args = app_args.split(' ')
-        app_args.extend(['-test_lab:platform', 'android'])
-        app_args.extend(['-test_lab:name', device.name])
-        app_args.extend(['-test_lab:id', device.identifier])
-        app_args = ' '.join(args)
+        app_args.extend(['-e', '-test_lab:platform', 'android'])
+        app_args.extend(['-e', '-test_lab:name', device_name])
+        app_args.extend(['-e', '-test_lab:id', device.identifier])
+        app_args.extend(['-e', '-test_lab:server', self.server_url])
+        app_args = ' '.join(app_args)
         self.adb.start_app(device.ip, device.identifier, self.package, self.activity, app_args)
 
 
