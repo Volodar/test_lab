@@ -4,8 +4,6 @@ import subprocess
 
 class SubprocessWrapper(object):
     def __init__(self, arguments):
-        if not isinstance(arguments, str):
-            print([arguments])
         assert isinstance(arguments, list) or isinstance(arguments, str)
 
         if isinstance(arguments, str):
@@ -14,7 +12,7 @@ class SubprocessWrapper(object):
         assert len(arguments) > 0
 
         self.arguments = arguments
-        print(arguments)
+        print(' '.join(arguments))
         self.process = subprocess.Popen(arguments, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         self.out = ''
         self.err = ''

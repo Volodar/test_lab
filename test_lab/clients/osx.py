@@ -31,12 +31,10 @@ class OsxClient(object):
         args.extend(['-test_lab:name', 'osx'])
         args.extend(['-test_lab:id', 'osx'])
         args.extend(['-test_lab:server', self.server_url])
-        args = ' '.join(args)
-        command = 'open -a {path} --args {args}'.format(
-            path=self.path_to_app,
-            args=args)
+        commands = ['open', '-a', self.path_to_app, '--args']
+        commands.extend(args)
 
-        process = SubprocessWrapper(command)
+        process = SubprocessWrapper(commands)
         code = process.call()
         if code != 0: # 253 - no connected devices
             raise RuntimeError('Cannot launch application on OSX. Error:' + process.err)
