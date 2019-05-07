@@ -153,8 +153,8 @@ class SubprocessDummy(object):
                     self.err = 'Error'
                     self.code = 1
             else:
-                print '\nCommand:'
-                print adb_command
+                print('\nCommand:')
+                print(adb_command)
 
 
 class TestAdb(unittest.TestCase):

@@ -1,8 +1,9 @@
-from __future__ import print_function
 import re
 import os
-from device import Device
-from subprocess_wrapper import SubprocessWrapper
+import signal
+import sys
+from test_lab.clients.device import Device
+from test_lab.clients.subprocess_wrapper import SubprocessWrapper
 
 
 # Used tool: https://github.com/ios-control/ios-deploy
@@ -25,15 +26,19 @@ class IosClient(object):
         self.uninstall_app = configuration.get('ios', 'uninstall_required', self.uninstall_app)
         self.device_limit = configuration.get('ios', 'device_limit', self.device_limit)
 
-        self.scan_devices()
-        self.scan_remote_devices(configuration)
+        try:
+            self.scan_devices()
+            self.scan_remote_devices(configuration)
+        except RuntimeError:
+            pid = os.getpid()
+            os.kill(pid, signal.SIGKILL)
 
     def launch(self, configuration, scenario):
         args = configuration.get_scenario_app_args(scenario)
 
         if self.uninstall_app:
             self.uninstall()
-        self.install_and_run(self.path_to_app, args)
+        return self.install_and_run(self.path_to_app, args)
 
     def scan_devices(self):
         print('Scan devices:')
@@ -66,8 +71,13 @@ class IosClient(object):
             self._uninstall_app(device)
 
     def install_and_run(self, path, args):
+        result = 0
         for device in self.devices:
-            self._install_and_run(device, path, args)
+            try:
+                self._install_and_run(device, path, args)
+            except RuntimeError:
+                result -= 1
+        return result
 
     def _uninstall_app(self, device):
         print('Uninstall app on device ' + device.identifier)
@@ -89,20 +99,29 @@ class IosClient(object):
         args.extend(['-test_lab:name', device.name])
         args.extend(['-test_lab:id', device.identifier])
         args.extend(['-test_lab:server', self.server_url])
-        command = '{root}/ios-deploy --justlaunch --debug --bundle {path} -i {device} --no-wifi'.format(root=self.root,
-                                                                                                        device=device.identifier,
-                                                                                                        path=path)
 
-        commands = command.split(' ')
+        commands = [
+            '{root}/ios-deploy'.format(root=self.root),
+            '--justlaunch',
+            '--debug',
+            '--bundle', path,
+            '-i', device.identifier,
+            '--no-wifi'
+        ]
         commands.extend(['--args', ' '.join(args)])
         process = SubprocessWrapper(commands)
         code = process.call()
         if code != 0:
+            print('Error on install app to ios Device: %s [%s]' % (device.identifier, device.name))
+            print('Out:')
+            print('    \n'.join(process.out.split('\n')))
+            print('Error:')
+            print('    \n'.join(process.err.split('\n')))
             raise RuntimeError('Cannot install app to device ' + device.identifier)
 
 
 def tests():
-    from test_lab.configuration import Configuration
+    from .configuration import Configuration
 
     config = Configuration('../../configuration.json')
 

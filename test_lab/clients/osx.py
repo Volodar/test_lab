@@ -1,7 +1,6 @@
-from __future__ import print_function
 import os
-from device import Device
-from subprocess_wrapper import SubprocessWrapper
+from test_lab.clients.device import Device
+from test_lab.clients.subprocess_wrapper import SubprocessWrapper
 
 
 class OsxClient(object):
@@ -22,7 +21,12 @@ class OsxClient(object):
         if not self.devices:
             return
         args = configuration.get_scenario_app_args(scenario)
-        self._run(args + ' ' + self.apps_args)
+
+        try:
+            self._run(args + ' ' + self.apps_args)
+        except RuntimeError:
+            return -1
+        return 0
 
     def _run(self, args):
         print('Run application on OSX platform')

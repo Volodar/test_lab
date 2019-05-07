@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 
 class TestCaseRecord(object):
     def __init__(self):
@@ -19,7 +17,7 @@ class Storage(object):
 
     def __init__(self):
         self.results = []
-        
+
     def push_test_case(self, test_case_name):
         self.results.append(TestCase(test_case_name))
 
@@ -30,9 +28,9 @@ class Storage(object):
         record.client_id = client_id
         record.client_name = client_name
         record.client_platform = client_platform
-        
+
         test_case.results.append(record)
-        
+
     def get_test_case(self, name):
         for test_case in reversed(self.results):
             if test_case.name == name:

@@ -1,15 +1,14 @@
-from __future__ import print_function
 import time
-import urlparse
+from urllib.parse import urlparse, parse_qs
 from threading import Thread
 from threading import Lock
-from server import HttpServer
-from configuration import Configuration
-from scenario import Scenario
-from clients.android import AndroidClient
-from clients.ios import IosClient
-from clients.osx import OsxClient
-from storage import Storage
+from .server import HttpServer
+from .configuration import Configuration
+from .scenario import Scenario
+from .clients.android import AndroidClient
+from .clients.ios import IosClient
+from .clients.osx import OsxClient
+from .storage import Storage
 
 
 class TestLab(object):
@@ -19,7 +18,7 @@ class TestLab(object):
 
         self.server = None
         self.server_url = self.configuration.json.get('server_url', 'http://127.0.0.1:8010')
-        self.server_url = self.server_url.encode('utf-8')
+        self.server_url = str(self.server_url)
         if ':' in self.server_url:
             index = self.server_url.rfind(':')
             self.server_port = int(self.server_url[index+1:])
@@ -78,7 +77,7 @@ class TestLab(object):
                     current = self.results_storage.get_records_count(scenario.name)
                     elapsed = int(time.time() - start_time)
                     print('Progress: {}s {}/{}'.format(elapsed, current, self.clients_count))
-                    if current == self.clients_count:
+                    if current >= self.clients_count:
                         break
 
         self.monitor_thread = Thread(target=worker)
@@ -86,7 +85,7 @@ class TestLab(object):
 
     def _run_scenario(self, scenario):
         def worker(client, scenario_name):
-            client.launch(self.configuration, scenario_name)
+            self.clients_count += client.launch(self.configuration, scenario_name)
 
         threads = []
         for client in self.clients:
@@ -156,8 +155,8 @@ class RequestHandler:
 
     def handle(self, _, payload):
         try:
-            parsed = urlparse.urlparse(payload)
-            params = urlparse.parse_qs(parsed.query)
+            parsed = urlparse(payload)
+            params = parse_qs(parsed.query)
             print('Got Payload: ', payload)
             if parsed.path == '/result' and 'code' in params or 'scenario' in params:
                 code = int(params['code'][0])
@@ -168,6 +167,6 @@ class RequestHandler:
                 with RequestHandler.TEST_LAB.mutex:
                     RequestHandler.TEST_LAB.add_result(code, scenario, client_id, client_name, client_platform)
         except RuntimeError:
-            self.server.send('error')
+            self.server.send('error'.encode())
         else:
-            self.server.send('ok')
+            self.server.send('ok'.encode())

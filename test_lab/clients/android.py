@@ -1,5 +1,6 @@
-from __future__ import print_function
 import os
+import signal
+
 from test_lab.clients.adb_wrapper import AdbWrapper
 from test_lab.clients.device import Device
 
@@ -28,8 +29,12 @@ class AndroidClient(object):
         self.uninstall_app = configuration.get('android', 'uninstall_required', self.uninstall_app)
         self.device_limit = configuration.get('android', 'device_limit', self.device_limit)
 
-        self.scan_devices()
-        self.scan_remote_devices(configuration)
+        try:
+            self.scan_devices()
+            self.scan_remote_devices(configuration)
+        except RuntimeError:
+            pid = os.getpid()
+            os.kill(pid, signal.SIGKILL)
 
         print('Available Android devices')
         for device in self.devices:
@@ -39,11 +44,16 @@ class AndroidClient(object):
         args = configuration.get_scenario_app_args(scenario)
         args = ' -e ' + args
 
+        result = 0
         for device in self.devices:
-            if self.uninstall_app:
-                self._uninstall_apk(device)
-            self._install_apk(device, self.path_to_app)
-            self._run_appplication(device, args)
+            try:
+                if self.uninstall_app:
+                    self._uninstall_apk(device)
+                self._install_apk(device, self.path_to_app)
+                self._run_appplication(device, args)
+            except RuntimeError:
+                result -= 1
+        return result
 
     def scan_devices(self):
         print('Scan devices:')
@@ -93,7 +103,7 @@ class AndroidClient(object):
 
 
 def tests():
-    from test_lab.configuration import Configuration
+    from .configuration import Configuration
 
     config = Configuration('../../configuration.json')
 

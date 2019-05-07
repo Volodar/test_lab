@@ -1,1 +1,1 @@
-from test_lab import TestLab
+from .test_lab import TestLab
