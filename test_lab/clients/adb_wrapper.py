@@ -1,7 +1,7 @@
 import re
 import time
 
-from test_lab.clients.subprocess_wrapper import SubprocessWrapper
+from ..clients.subprocess_wrapper import SubprocessWrapper
 
 
 class AdbWrapper(object):

@@ -14,13 +14,15 @@ class OsxClient(object):
             self.apps_args = configuration.get('osx', 'app_args', '')
             device = Device()
             self.devices.append(device)
+        else:
+            Log.debug('OSX Client: app not exist with path: [{}]', self.path_to_app)
 
     def scan_devices(self):
         pass
 
     def launch(self, configuration, scenario):
         if not self.devices:
-            return
+            return 0
         args = configuration.get_scenario_app_args(scenario)
 
         try:
