@@ -1,5 +1,6 @@
 from http.server import HTTPServer
 from http.server import BaseHTTPRequestHandler
+from .log import Log
 
 
 class HttpServer(BaseHTTPRequestHandler):
@@ -26,7 +27,7 @@ class HttpServer(BaseHTTPRequestHandler):
 
         except Exception as inst:
             self.wfile.write("error({})".format(inst))
-            print("error({})".format(inst))
+            Log.error("error({})".format(inst))
 
     def send(self, message):
         self.wfile.write(message)

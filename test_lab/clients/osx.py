@@ -1,6 +1,7 @@
 import os
-from test_lab.clients.device import Device
-from test_lab.clients.subprocess_wrapper import SubprocessWrapper
+from ..clients.device import Device
+from ..clients.subprocess_wrapper import SubprocessWrapper
+from ..log import Log
 
 
 class OsxClient(object):
@@ -29,7 +30,7 @@ class OsxClient(object):
         return 0
 
     def _run(self, args):
-        print('Run application on OSX platform')
+        Log.info('Run application on OSX platform. Args: {}', args)
         args = args.split(' ')
         args.extend(['-test_lab:platform', 'osx'])
         args.extend(['-test_lab:name', 'osx'])

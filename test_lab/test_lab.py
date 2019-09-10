@@ -9,7 +9,7 @@ from .clients.android import AndroidClient
 from .clients.ios import IosClient
 from .clients.osx import OsxClient
 from .storage import Storage
-
+from .log import Log
 
 class TestLab(object):
     def __init__(self, path_or_json):
@@ -24,7 +24,7 @@ class TestLab(object):
             self.server_port = int(self.server_url[index+1:])
             self.server_url = self.server_url[:index]
         else:
-            self.server_port = 80
+            self.server_port = 8000
         self.server_thread = None
         self.monitor_thread = None
 
@@ -47,14 +47,14 @@ class TestLab(object):
             try:
                 self._run_scenario(scenario)
             except RuntimeError as error:
-                print(error)
+                Log.error(error)
                 self._terminate = True
             self.monitor_thread.join()
         self._stop_server()
         self._print_results()
 
     def _run_server(self):
-        print('Run server')
+        Log.info('Run server')
 
         def worker():
             self.server.serve_forever()
@@ -65,7 +65,7 @@ class TestLab(object):
         self.server_thread.start()
 
     def _run_monitor(self, scenario):
-        print('Run monitor')
+        Log.info('Run monitor')
 
         def worker():
             start_time = time.time()
@@ -76,7 +76,7 @@ class TestLab(object):
                         break
                     current = self.results_storage.get_records_count(scenario.name)
                     elapsed = int(time.time() - start_time)
-                    print('Progress: {}s {}/{}'.format(elapsed, current, self.clients_count))
+                    Log.debug('Progress: {}s {}/{}', elapsed, current, self.clients_count)
                     if current >= self.clients_count:
                         break
 
@@ -97,7 +97,7 @@ class TestLab(object):
             thread.join()
 
     def _stop_server(self):
-        print('Stop server')
+        Log.info('Stop server')
         if self.server:
             self.server.shutdown()
             self.server_thread.join()
@@ -128,18 +128,19 @@ class TestLab(object):
             thread.join()
 
     def _print_results(self):
-        print('\n\nTests result:\n')
+        Log.whitespace()
+        Log.result('Tests result:')
         success = len(self.results_storage.results) == len(self.scenarios)
         for test_case in self.results_storage.results:
-            print('  Test: ', test_case.name)
+            Log.result('  Test: {}', test_case.name)
             for record in test_case.results:
-                print('    Platform: {}, Name: {}, ID: {}, Result code: {}'.format(record.client_platform,
-                                                                                   record.client_name,
-                                                                                   record.client_id,
-                                                                                   record.result_code))
+                Log.result('    Platform: {}, Name: {}, ID: {}, Result code: {}', record.client_platform,
+                                                                                  record.client_name,
+                                                                                  record.client_id,
+                                                                                  record.result_code)
                 success = success and (record.result_code == 0)
             success = success and len(test_case.results) == self.clients_count
-        print('\nSumary: ' + ('Success' if success else 'Failed'))
+        Log.result('Sumary: {}', 'Success' if success else 'Failed')
         exit(0 if success else 1)
 
     def add_result(self, code, scenario, client_id, client_name, client_platform):
@@ -157,7 +158,7 @@ class RequestHandler:
         try:
             parsed = urlparse(payload)
             params = parse_qs(parsed.query)
-            print('Got Payload: ', payload)
+            Log.debug('Got Payload: {}', payload)
             if parsed.path == '/result' and 'code' in params or 'scenario' in params:
                 code = int(params['code'][0])
                 scenario = params['scenario'][0]

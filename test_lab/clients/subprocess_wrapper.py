@@ -1,4 +1,5 @@
 import subprocess
+from ..log import Log
 
 
 class SubprocessWrapper(object):
@@ -11,7 +12,7 @@ class SubprocessWrapper(object):
         assert len(arguments) > 0
 
         self.arguments = arguments
-        print(' '.join(arguments))
+        Log.debug(' '.join(arguments))
         self.process = subprocess.Popen(arguments, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         self.out = ''
         self.err = ''
@@ -27,5 +28,5 @@ class SubprocessWrapper(object):
             self.out, self.err = ('Timeout', 'Timeout')
             self.code = -1
 
-        print(self.out)
+        Log.debug(self.out)
         return self.code

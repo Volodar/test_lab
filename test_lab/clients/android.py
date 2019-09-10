@@ -1,8 +1,9 @@
 import os
 import signal
 
-from test_lab.clients.adb_wrapper import AdbWrapper
-from test_lab.clients.device import Device
+from ..clients.adb_wrapper import AdbWrapper
+from ..clients.device import Device
+from ..log import Log
 
 
 def get_root():
@@ -17,6 +18,7 @@ class AndroidClient(object):
         self.server_url = ''
         self.package = ''
         self.uninstall_app = True
+        self.install_required = True
         self.path_to_app = None
         self.device_limit = -1
         self.devices = []
@@ -36,9 +38,9 @@ class AndroidClient(object):
             pid = os.getpid()
             os.kill(pid, signal.SIGKILL)
 
-        print('Available Android devices')
+        Log.info('Available Android devices')
         for device in self.devices:
-            print('  Name: {}, ID: {}, IP: {}'.format(device.name, device.identifier, device.ip))
+            Log.info('  Name: {}, ID: {}, IP: {}', device.name, device.identifier, device.ip)
 
     def launch(self, configuration, scenario):
         args = configuration.get_scenario_app_args(scenario)
@@ -49,14 +51,17 @@ class AndroidClient(object):
             try:
                 if self.uninstall_app:
                     self._uninstall_apk(device)
-                self._install_apk(device, self.path_to_app)
+                    self.install_required = True
+                if self.install_required:
+                    self._install_apk(device, self.path_to_app)
+                    self.install_required = False
                 self._run_appplication(device, args)
             except RuntimeError:
                 result -= 1
         return result
 
     def scan_devices(self):
-        print('Scan devices:')
+        Log.info('Scan devices:')
         self.adb.kill_server()
         usb_devices = self.adb.devices()
         for identifier in usb_devices:
@@ -66,7 +71,7 @@ class AndroidClient(object):
             self.devices.append(device)
 
     def scan_remote_devices(self, configuration):
-        print('Scan remote devices')
+        Log.info('Scan remote devices...')
 
         remote_devices = configuration.get('android', 'remote_devices', [])
 
@@ -82,15 +87,15 @@ class AndroidClient(object):
         self.adb.kill_server()
 
     def _install_apk(self, device, path_to_apk):
-        print('Install apk to device ' + device.get_human_name())
+        Log.info('Install apk to device {}...', device.get_human_name())
         self.adb.install_apk(device.ip, device.identifier, path_to_apk)
 
     def _uninstall_apk(self, device):
-        print('Uninstall apk on device ' + device.get_human_name())
+        Log.info('Uninstall apk on device {}...', device.get_human_name())
         self.adb.uninstall(device.ip, device.identifier, self.package)
 
     def _run_appplication(self, device, app_args=None):
-        print('Run application on device ' + device.get_human_name())
+        Log.info('Run application on Android Device: {}. Args: {} ', device.get_human_name(), app_args)
         device_name = device.name
         device_name = device_name.replace(' ', '_')
         app_args = app_args.split(' ')
@@ -103,7 +108,7 @@ class AndroidClient(object):
 
 
 def tests():
-    from .configuration import Configuration
+    from ..configuration import Configuration
 
     config = Configuration('../../configuration.json')
 

@@ -1,9 +1,9 @@
 import re
 import os
 import signal
-import sys
-from test_lab.clients.device import Device
-from test_lab.clients.subprocess_wrapper import SubprocessWrapper
+from ..clients.device import Device
+from ..clients.subprocess_wrapper import SubprocessWrapper
+from ..log import Log
 
 
 # Used tool: https://github.com/ios-control/ios-deploy
@@ -41,7 +41,7 @@ class IosClient(object):
         return self.install_and_run(self.path_to_app, args)
 
     def scan_devices(self):
-        print('Scan devices:')
+        Log.info('Scan devices...')
 
         process = SubprocessWrapper('{root}/ios-deploy -c --timeout 2'.format(root=self.root))
         code = process.call()
@@ -59,9 +59,9 @@ class IosClient(object):
             if 0 < self.device_limit <= len(self.devices):
                 break
 
-        print('Available iOS devices')
+        Log.info('Available iOS devices:')
         for device in self.devices:
-            print('  Name: {}, ID: {}, IP: {}'.format(device.name, device.identifier, device.ip))
+            Log.info('  Name: {}, ID: {}, IP: {}', device.name, device.identifier, device.ip)
 
     def scan_remote_devices(self, configuration):
         pass
@@ -80,7 +80,7 @@ class IosClient(object):
         return result
 
     def _uninstall_app(self, device):
-        print('Uninstall app on device ' + device.identifier)
+        Log.debug('Uninstall app on device {}...', device.identifier)
         command = '{root}/ios-deploy --uninstall_only --bundle_id {bundle} -i {device}'.format(root=self.root,
                                                                                                device=device.identifier,
                                                                                                bundle=self.package)
@@ -90,7 +90,8 @@ class IosClient(object):
             raise RuntimeError('Cannot uninstall app on device ' + device.identifier)
 
     def _install_and_run(self, device, path, args):
-        print('Install app to device ' + device.identifier)
+        Log.info('Run application on iOS Device: {}. Args: {} ', device.get_human_name(), args)
+        Log.info('Install app to device...')
         args = args.split(' ')
 
         device.name = device.name.replace(' ', '_')
@@ -112,16 +113,16 @@ class IosClient(object):
         process = SubprocessWrapper(commands)
         code = process.call()
         if code != 0:
-            print('Error on install app to ios Device: %s [%s]' % (device.identifier, device.name))
-            print('Out:')
-            print('    \n'.join(process.out.split('\n')))
-            print('Error:')
-            print('    \n'.join(process.err.split('\n')))
-            raise RuntimeError('Cannot install app to device ' + device.identifier)
+            Log.error('Error on install app to ios Device: {} [{}]', device.identifier, device.name)
+            Log.error('Out:')
+            Log.error('    \n'.join(process.out.split('\n')))
+            Log.error('Error:')
+            Log.error('    \n'.join(process.err.split('\n')))
+            raise RuntimeError('Cannot install app to device: {}', device.identifier)
 
 
 def tests():
-    from .configuration import Configuration
+    from ..configuration import Configuration
 
     config = Configuration('../../configuration.json')
 
