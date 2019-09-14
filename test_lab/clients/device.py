@@ -5,6 +5,7 @@ class Device(object):
         self.name = 'Unknown Device'
         self.ip = None
         self.identifier = None
+        self.app_installed = False
 
     def is_remote(self):
         return self.ip is not None

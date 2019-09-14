@@ -19,7 +19,6 @@ class AndroidClient(object):
         self.package = ''
         self.uninstall_app = True
         self.install_required = True
-        self.install_required_first_install = True
         self.path_to_app = None
         self.device_limit = -1
         self.devices = []
@@ -50,12 +49,13 @@ class AndroidClient(object):
         result = 0
         for device in self.devices:
             try:
-                if self.uninstall_app or self.install_required_first_install:
+                if self.uninstall_app or not device.app_installed:
                     self._uninstall_apk(device)
                     self.install_required = True
                     self.install_required_first_install = False
                 if self.install_required:
                     self._install_apk(device, self.path_to_app)
+                    device.app_installed = True
                     self.install_required = False
                 self._run_appplication(device, args)
             except RuntimeError:
