@@ -27,6 +27,7 @@ class TestLab(object):
             self.server_port = 8000
         self.server_thread = None
         self.monitor_thread = None
+        self.start_time_monitor = 0
 
         self.results_storage = Storage()
         self.scenarios = []
@@ -68,14 +69,14 @@ class TestLab(object):
         Log.info('Run monitor')
 
         def worker():
-            start_time = time.time()
-            while time.time() <= start_time + scenario.timeout:
+            self.start_time_monitor = time.time()
+            while time.time() <= self.start_time_monitor + scenario.timeout:
                 time.sleep(1)
                 with self.mutex:
                     if self._terminate:
                         break
                     current = self.results_storage.get_records_count(scenario.name)
-                    elapsed = int(time.time() - start_time)
+                    elapsed = int(time.time() - self.start_time_monitor)
                     Log.debug('Progress: {}s {}/{}', elapsed, current, self.clients_count)
                     if current >= self.clients_count:
                         break
@@ -134,17 +135,19 @@ class TestLab(object):
         for test_case in self.results_storage.results:
             Log.result('  Test: {}', test_case.name)
             for record in test_case.results:
-                Log.result('    Platform: {}, Name: {}, ID: {}, Result code: {}', record.client_platform,
-                                                                                  record.client_name,
-                                                                                  record.client_id,
-                                                                                  record.result_code)
+                Log.result('    Platform: {}, Name: {}, ID: {}, Result code: {}, Duration: {}s', record.client_platform,
+                                                                                                 record.client_name,
+                                                                                                 record.client_id,
+                                                                                                 record.result_code,
+                                                                                                 record.duration)
                 success = success and (record.result_code == 0)
             success = success and len(test_case.results) == self.clients_count
         Log.result('Sumary: {}', 'Success' if success else 'Failed')
         exit(0 if success else 1)
 
     def add_result(self, code, scenario, client_id, client_name, client_platform):
-        self.results_storage.add_result(scenario, code, client_id, client_name, client_platform)
+        elapsed_seconds = int(time.time() - self.start_time_monitor)
+        self.results_storage.add_result(scenario, code, client_id, client_name, client_platform, elapsed_seconds)
 
 
 class RequestHandler:

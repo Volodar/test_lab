@@ -5,6 +5,7 @@ class TestCaseRecord(object):
         self.client_name = ''
         self.client_platform = ''
         self.result_code = 0
+        self.duration = 0
 
 
 class TestCase(object):
@@ -21,13 +22,14 @@ class Storage(object):
     def push_test_case(self, test_case_name):
         self.results.append(TestCase(test_case_name))
 
-    def add_result(self, test_case_name, result_code, client_id, client_name, client_platform):
+    def add_result(self, test_case_name, result_code, client_id, client_name, client_platform, seconds):
         test_case = self.get_test_case(test_case_name)
         record = TestCaseRecord()
         record.result_code = result_code
         record.client_id = client_id
         record.client_name = client_name
         record.client_platform = client_platform
+        record.duration = seconds
 
         test_case.results.append(record)
 
