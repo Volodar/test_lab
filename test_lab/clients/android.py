@@ -27,10 +27,16 @@ class AndroidClient(object):
         self.activity = configuration.get('android', 'activity')
         self.package = configuration.get('android', 'package')
         self.path_to_app = configuration.get('android', 'path_to_apk')
-        self.path_to_app = os.path.abspath(self.path_to_app.format(root=get_root()))
         self.uninstall_app = configuration.get('android', 'uninstall_required', self.uninstall_app)
         self.device_limit = configuration.get('android', 'device_limit', self.device_limit)
 
+        if not self.path_to_app:
+            return
+        if not os.path.isfile(self.path_to_app) and not os.path.isdir(self.path_to_app):
+            Log.info('iOS Client: app not exist with path: [{}]', self.path_to_app)
+            return
+
+        self.path_to_app = os.path.abspath(self.path_to_app.format(root=get_root()))
         try:
             self.scan_devices()
             self.scan_remote_devices(configuration)

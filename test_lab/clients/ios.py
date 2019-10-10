@@ -1,8 +1,10 @@
 import re
 import os
 import signal
-from ..clients.device import Device
-from ..clients.subprocess_wrapper import SubprocessWrapper
+
+from .android import get_root
+from .device import Device
+from .subprocess_wrapper import SubprocessWrapper
 from ..log import Log
 
 
@@ -26,6 +28,13 @@ class IosClient(object):
         self.uninstall_app = configuration.get('ios', 'uninstall_required', self.uninstall_app)
         self.device_limit = configuration.get('ios', 'device_limit', self.device_limit)
 
+        if not self.path_to_app:
+            return
+        if not os.path.isfile(self.path_to_app) and not os.path.isdir(self.path_to_app):
+            Log.info('iOS Client: app not exist with path: [{}]', self.path_to_app)
+            return
+
+        self.path_to_app = os.path.abspath(self.path_to_app.format(root=get_root()))
         try:
             self.scan_devices()
             self.scan_remote_devices(configuration)

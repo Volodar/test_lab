@@ -15,7 +15,7 @@ class OsxClient(object):
             device = Device()
             self.devices.append(device)
         else:
-            Log.debug('OSX Client: app not exist with path: [{}]', self.path_to_app)
+            Log.info('OSX Client: app not exist with path: [{}]', self.path_to_app)
 
     def scan_devices(self):
         pass
