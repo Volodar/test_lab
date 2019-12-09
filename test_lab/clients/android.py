@@ -33,7 +33,7 @@ class AndroidClient(object):
         if not self.path_to_app:
             return
         if not os.path.isfile(self.path_to_app) and not os.path.isdir(self.path_to_app):
-            Log.info('iOS Client: app not exist with path: [{}]', self.path_to_app)
+            Log.info('Android Client: app not exist with path: [{}]', self.path_to_app)
             return
 
         self.path_to_app = os.path.abspath(self.path_to_app.format(root=get_root()))
