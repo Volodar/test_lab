@@ -48,9 +48,21 @@ class AndroidClient(object):
         for device in self.devices:
             Log.info('  Name: {}, ID: {}, IP: {}', device.name, device.identifier, device.ip)
 
+    @staticmethod
+    def get_args_string(args):
+        args = args.split(' ')
+        result = ''
+        i = 0
+        while i < len(args) - 1:
+            result += '-e {} {} '.format(args[i], args[i+1])
+            i += 2
+        if result:
+            result = result[0:-1]
+        return result
+
     def launch(self, configuration, scenario):
         args = configuration.get_scenario_app_args(scenario)
-        args = ' -e ' + args
+        args = ' ' + AndroidClient.get_args_string(args)
 
         result = 0
         for device in self.devices:
@@ -58,14 +70,16 @@ class AndroidClient(object):
                 if self.uninstall_app or not device.app_installed:
                     self._uninstall_apk(device)
                     self.install_required = True
-                    self.install_required_first_install = False
+
                 if self.install_required:
                     self._install_apk(device, self.path_to_app)
                     device.app_installed = True
                     self.install_required = False
                 self._run_appplication(device, args)
-            except RuntimeError:
+            except RuntimeError as error:
+                Log.error(str(error))
                 result -= 1
+                result = max(0, result)
         return result
 
     def scan_devices(self):

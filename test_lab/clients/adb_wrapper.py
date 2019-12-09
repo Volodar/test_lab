@@ -100,3 +100,5 @@ class AdbWrapper(object):
         process = self.subprocess_wrapper(command)
         if process.call() != 0:
             raise RuntimeError('Cannot launch app on device')
+        if process.err:
+            raise RuntimeError('Cannot launch app on device. Error: \n' + process.err)

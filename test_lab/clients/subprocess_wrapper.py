@@ -28,5 +28,9 @@ class SubprocessWrapper(object):
             self.out, self.err = ('Timeout', 'Timeout')
             self.code = -1
 
+        Log.debug('Subprocess result code: ' + str(self.code))
+        Log.debug('Subprocess out:')
         Log.debug(self.out)
+        Log.debug('Subprocess err:')
+        Log.debug(self.err)
         return self.code
