@@ -83,6 +83,20 @@ class AdbWrapper(object):
         if process.call() != 0:
             raise RuntimeError('Cannot uninstall app from device')
 
+    def stop_app(self, ip, device, package):
+        command = ' shell am force-stop {}'.format(package)
+        if ip is not None:
+            self.connect(ip)
+            command = 'adb' + command
+        else:
+            command = 'adb -s {}'.format(device) + command
+
+        process = self.subprocess_wrapper(command)
+        if process.call() != 0:
+            raise RuntimeError('Cannot stop app on device')
+        if process.err:
+            raise RuntimeError('Cannot stop app on device. Error: \n' + process.err)
+
     def start_app(self, ip, device, package, activity, app_args):
         command = ' shell am start -n {}/{} -a android.intent.action.MAIN -c android.intent.category.LAUNCHER'.format(
                     package,

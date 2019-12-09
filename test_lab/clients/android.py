@@ -126,6 +126,8 @@ class AndroidClient(object):
         app_args.extend(['-e', '-test_lab:id', device.identifier])
         app_args.extend(['-e', '-test_lab:server', self.server_url])
         app_args = ' '.join(app_args)
+
+        self.adb.stop_app(device.ip, device.identifier, self.package)
         self.adb.start_app(device.ip, device.identifier, self.package, self.activity, app_args)
 
 
